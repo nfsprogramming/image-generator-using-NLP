@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', sans-serif;
+
+  --color-dark-950: #020617;
+  --color-dark-900: #0f172a;
+  --color-dark-800: #1e293b;
+  --color-dark-700: #334155;
+
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #7c3aed;
+  --color-primary-400: #a78bfa;
+  --color-primary-200: #ddd6fe;
+
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+body {
+  @apply bg-dark-950 text-slate-100 font-sans antialiased;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(124, 58, 237, 0.15) 0%, transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  @apply bg-dark-900/60 backdrop-blur-xl border border-white/10 shadow-2xl;
+}
+
+
+/* Fix for standard select dropdown options */
+select option {
+  background-color: #0f172a;
+  /* dark-900 */
+  color: #f8fafc;
+  /* slate-50 */
+}
+
+/* Hide spin buttons for number inputs */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.input-field {
+  @apply w-full bg-dark-950/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all duration-300;
+  color-scheme: dark;
+  /* Helps with browser default UI elements */
+}
+
+.btn-primary {
+  @apply w-full bg-gradient-to-br from-primary-500 to-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300;
+}
+
+.label-text {
+  @apply block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2;
+}
