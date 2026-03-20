@@ -10,10 +10,10 @@ import {
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
 const PRESETS = [
-  { name: "Cyberpunk", prompt: "A cyberpunk city in the rain, neon lights, ultra-detailed masterpiece, 8k" },
-  { name: "Fantasy", prompt: "A majestic dragon on a peak, golden scales, dramatic atmosphere, cinematic" },
-  { name: "Anime", prompt: "Futuristic samurai portrait, tech armor, intense focus, v-ray render, anime style" },
-  { name: "Cosmic", prompt: "Vibrant galaxy inside a crystal bottle, cosmic nebula, sparkling stars, hyperrealism" }
+  { name: "Cyberpunk", prompt: "A cyberpunk city in the rain, neon lights, ultra-detailed masterpiece, 8k", image: "cyberpunk.png" },
+  { name: "Fantasy", prompt: "A majestic dragon on a peak, golden scales, dramatic atmosphere, cinematic", image: "dragon.png" },
+  { name: "Anime", prompt: "Futuristic samurai portrait, tech armor, intense focus, v-ray render, anime style", image: "samurai.png" },
+  { name: "Cosmic", prompt: "Vibrant galaxy inside a crystal bottle, cosmic nebula, sparkling stars, hyperrealism", image: "galaxy.png" }
 ];
 
 function App() {
@@ -22,6 +22,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   // Settings
   const [nlpMode, setNlpMode] = useState("Transformer (Creative)");
@@ -63,6 +64,22 @@ function App() {
       addLog("CRITICAL: Neural link severed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const enhancePrompt = async () => {
+    if (!prompt) return;
+    setIsEnhancing(true);
+    addLog("Analyzing neural prompt for enhancement...");
+    try {
+      const response = await axios.post(`${API_URL}/enhance`, { prompt });
+      setPrompt(response.data.enhanced);
+      addLog("Neural prompt enhanced successfully.");
+    } catch (err) {
+      console.error(err);
+      addLog("WARNING: Neural enhancement failed.");
+    } finally {
+      setIsEnhancing(false);
     }
   };
 
@@ -126,11 +143,12 @@ function App() {
                   className="input-field min-h-[180px] resize-none text-lg pr-20"
                 />
                 <button
-                  onClick={() => {/* Enhance Logic */ }}
-                  className="absolute bottom-4 right-4 p-3 bg-primary-600 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-primary-500/30 group-hover:shadow-primary-500/50"
+                  onClick={enhancePrompt}
+                  disabled={isEnhancing || !prompt}
+                  className={`absolute bottom-4 right-4 p-3 bg-primary-600 rounded-xl transition-all shadow-lg shadow-primary-500/30 group-hover:shadow-primary-500/50 ${isEnhancing ? 'animate-pulse opacity-50' : 'hover:scale-110 active:scale-95'}`}
                   title="Neural Enhancement"
                 >
-                  <Sparkles className="w-5 h-5 text-white" />
+                  <Sparkles className={`w-5 h-5 text-white ${isEnhancing ? 'animate-spin' : ''}`} />
                 </button>
               </div>
 
@@ -288,8 +306,9 @@ function App() {
                 className="min-w-[340px] flex-shrink-0 relative group cursor-pointer"
               >
                 <div className="aspect-[16/10] bg-dark-900 rounded-[32px] overflow-hidden border border-white/5 shadow-2xl relative">
-                  <div className={`absolute inset-0 bg-gradient-to-br transition-all duration-700 ${i === 0 ? 'from-purple-500/20' : i === 1 ? 'from-amber-500/20' : i === 2 ? 'from-blue-500/20' : 'from-indigo-500/20'} to-transparent`} />
-                  <div className="absolute inset-0 flex flex-col justify-end p-8 gap-3">
+                  <img src={`/assets/gallery/${p.image}`} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={p.name} />
+                  <div className={`absolute inset-0 bg-gradient-to-br transition-all duration-700 ${i === 0 ? 'from-purple-500/20' : i === 1 ? 'from-amber-500/20' : i === 2 ? 'from-blue-500/20' : 'from-indigo-500/20'} to-dark-950/60 group-hover:opacity-0 opacity-100`} />
+                  <div className="absolute inset-0 flex flex-col justify-end p-8 gap-3 opacity-100 group-hover:bg-dark-950/40 transition-all">
                     <div className="w-10 h-10 glass rounded-xl flex items-center justify-center">
                       <Zap className="w-4 h-4 text-white" />
                     </div>

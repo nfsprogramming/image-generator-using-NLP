@@ -63,23 +63,33 @@ def generate_and_process(prompt, nlp_mode, filter_choice, width, height, seed, p
     seed = int(seed) if seed != -1 else random.randint(0, 1000000)
     url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(final_prompt)}?width={width}&height={height}&seed={seed}&nologo=true"
     
-    try:
-        api_key = os.getenv("POLLINATIONS_API_KEY", "")
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-            'Authorization': f'Bearer {api_key}'
-        }
-        response = requests.get(url, headers=headers, timeout=120)
-        if response.status_code == 200:
-            image = Image.open(BytesIO(response.content))
-            if filter_choice != "None":
-                image = apply_opencv_filter(image, filter_choice)
-            short_prompt = str(final_prompt)[0:80] # pyre-ignore
-            return image, f"Neural Synthesis Successful | Final Prompt: {short_prompt}..."
-        else:
-            return None, f"Cloud Synthesis Failed: {response.status_code}"
-    except Exception as e:
-        return None, f"Neural Link Error: {str(e)}"
+    for attempt in range(3):
+        try:
+            api_key = os.getenv("POLLINATIONS_API_KEY")
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            if api_key:
+                headers['Authorization'] = f'Bearer {api_key}'
+            
+            response = requests.get(url, headers=headers, timeout=120)
+            
+            if response.status_code == 200:
+                image = Image.open(BytesIO(response.content))
+                if filter_choice != "None":
+                    image = apply_opencv_filter(image, filter_choice)
+                short_prompt = final_prompt[:80]
+                return image, f"Neural Synthesis Successful | Final Prompt: {short_prompt}..."
+            elif response.status_code == 429:
+                if attempt < 2:
+                    time.sleep(2 ** attempt)
+                    continue
+                return None, "Pollinations AI is currently under high load. Please try again in secondary."
+            else:
+                return None, f"Cloud Synthesis Failed: {response.status_code}"
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(1)
+                continue
+            return None, f"Neural Link Error: {str(e)}"
 
 # --- THE ABSOLUTE DARK THEME - VERSION 15 ---
 custom_css = """

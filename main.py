@@ -13,6 +13,8 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import os
+import time
+
 
 # --- Optional Imports (Heavy NLP) ---
 TRANSFORMERS_AVAILABLE = False
@@ -131,6 +133,17 @@ class GenerateRequest(BaseModel):
     height: int = 1024
     seed: int = -1
 
+class EnhanceRequest(BaseModel):
+    prompt: str
+
+@app.post("/enhance")
+async def enhance(req: EnhanceRequest):
+    try:
+        enhanced = nlp_enhance_prompt(req.prompt)
+        return {"enhanced": enhanced}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/generate")
 async def generate(req: GenerateRequest):
     status = []
@@ -146,30 +159,42 @@ async def generate(req: GenerateRequest):
     seed = req.seed if req.seed != -1 else random.randint(0, 1000000)
     url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(final_prompt)}?width={req.width}&height={req.height}&seed={seed}&nologo=true"
     
-    try:
-        api_key = os.getenv("POLLINATIONS_API_KEY", "")
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-            'Authorization': f'Bearer {api_key}'
-        }
-        response = requests.get(url, headers=headers, timeout=120)
-        if response.status_code == 200:
-            image = Image.open(BytesIO(response.content))
-            if req.filter != "None":
-                image = apply_opencv_filter(image, req.filter)
+    for attempt in range(3):
+        try:
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            api_key = os.getenv("POLLINATIONS_API_KEY")
+            if api_key:
+                headers['Authorization'] = f'Bearer {api_key}'
             
-            buffered = BytesIO()
-            image.save(buffered, format="JPEG")
-            img_str = base64.b64encode(buffered.getvalue()).decode()
-            return {
-                "image": f"data:image/jpeg;base64,{img_str}",
-                "final_prompt": final_prompt,
-                "logs": "\n".join(status)
-            }
-        else:
-            raise HTTPException(status_code=response.status_code, detail="Pollinations AI error")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+            response = requests.get(url, headers=headers, timeout=120)
+            
+            if response.status_code == 200:
+                image = Image.open(BytesIO(response.content))
+                if req.filter != "None":
+                    image = apply_opencv_filter(image, req.filter)
+                
+                buffered = BytesIO()
+                image.save(buffered, format="JPEG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                return {
+                    "image": f"data:image/jpeg;base64,{img_str}",
+                    "final_prompt": final_prompt,
+                    "logs": "\n".join(status)
+                }
+            elif response.status_code == 429:
+                if attempt < 2:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                    continue
+                raise HTTPException(status_code=429, detail="Pollinations AI is currently under high load. Please wait a moment and try again.")
+            else:
+                raise HTTPException(status_code=response.status_code, detail=f"Pollinations AI Error ({response.status_code})")
+        except HTTPException:
+            raise
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(1)
+                continue
+            raise HTTPException(status_code=500, detail=f"Neural Link Error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
