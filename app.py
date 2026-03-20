@@ -64,12 +64,12 @@ def generate_and_process(prompt, nlp_mode, filter_choice, width, height, seed, p
     url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(final_prompt)}?width={width}&height={height}&seed={seed}&nologo=true"
     
     try:
-        response = requests.get(url, timeout=35)
+        response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=120)
         if response.status_code == 200:
             image = Image.open(BytesIO(response.content))
             if filter_choice != "None":
                 image = apply_opencv_filter(image, filter_choice)
-            short_prompt = str(final_prompt)[0:80]
+            short_prompt = str(final_prompt)[0:80] # pyre-ignore
             return image, f"Neural Synthesis Successful | Final Prompt: {short_prompt}..."
         else:
             return None, f"Cloud Synthesis Failed: {response.status_code}"
