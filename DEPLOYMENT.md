@@ -12,7 +12,7 @@ This project is set up to be deployed in two parts:
 4.  Connect your GitHub repository.
 5.  **Settings**:
     *   **Runtime**: Python 3
-    *   **Build Command**: `pip install -r requirements.txt`
+    *   **Build Command**: `pip install -r requirements-render.txt`
     *   **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 6.  Click **Create Web Service**.
 7.  Once deployed, copy your **Service URL** (e.g., `https://ai-art-studio.onrender.com`).

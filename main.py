@@ -143,7 +143,7 @@ async def generate(req: GenerateRequest):
         status.append(f"NLTK optimized: {final_prompt}")
 
     seed = req.seed if req.seed != -1 else random.randint(0, 1000000)
-    url = f"https://pollinations.ai/prompt/{requests.utils.quote(final_prompt)}?width={req.width}&height={req.height}&seed={seed}&nologo=true"
+    url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(final_prompt)}?width={req.width}&height={req.height}&seed={seed}&nologo=true"
     
     try:
         response = requests.get(url, timeout=30)

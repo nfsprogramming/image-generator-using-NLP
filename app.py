@@ -61,7 +61,7 @@ def generate_and_process(prompt, nlp_mode, filter_choice, width, height, seed, p
         final_prompt = nltk_process_prompt(prompt)
 
     seed = int(seed) if seed != -1 else random.randint(0, 1000000)
-    url = f"https://pollinations.ai/prompt/{requests.utils.quote(final_prompt)}?width={width}&height={height}&seed={seed}&nologo=true"
+    url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(final_prompt)}?width={width}&height={height}&seed={seed}&nologo=true"
     
     try:
         response = requests.get(url, timeout=35)
