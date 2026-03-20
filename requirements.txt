@@ -1,0 +1,10 @@
+gradio
+requests
+pillow
+transformers
+torch
+opencv-python
+nltk
+fastapi
+uvicorn
+python-multipart
