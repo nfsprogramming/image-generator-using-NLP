@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wand2, Image as ImageIcon, Sparkles, Layers, Sliders, Download, Terminal, AlertCircle } from 'lucide-react';
+import {
+  Wand2, Image as ImageIcon, Sparkles, Layers, Sliders,
+  Download, Terminal, AlertCircle, Share2, RefreshCw,
+  Maximize2, Cpu, History, Zap, Settings, Command
+} from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
+
+const PRESETS = [
+  { name: "Cyberpunk", prompt: "A cyberpunk city in the rain, neon lights, ultra-detailed masterpiece, 8k" },
+  { name: "Fantasy", prompt: "A majestic dragon on a peak, golden scales, dramatic atmosphere, cinematic" },
+  { name: "Anime", prompt: "Futuristic samurai portrait, tech armor, intense focus, v-ray render, anime style" },
+  { name: "Cosmic", prompt: "Vibrant galaxy inside a crystal bottle, cosmic nebula, sparkling stars, hyperrealism" }
+];
 
 function App() {
   const [prompt, setPrompt] = useState("");
@@ -19,13 +30,17 @@ function App() {
   const [height, setHeight] = useState(1024);
   const [seed, setSeed] = useState(-1);
 
+  const addLog = (msg) => {
+    setLogs(curr => [...curr, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-8));
+  };
+
   const generateImage = async () => {
     if (!prompt) return;
 
     setLoading(true);
     setError(null);
     setResult(null);
-    setLogs(["Initializing generation protocol..."]);
+    addLog("Initiating neural synthesis sequence...");
 
     try {
       const response = await axios.post(`${API_URL}/generate`, {
@@ -38,253 +53,256 @@ function App() {
       });
 
       setResult(response.data);
-      setLogs(curr => [...curr, ...response.data.logs.split('\n')]);
+      addLog("Synthesis complete. Artifact retrieved.");
+      if (response.data.logs) {
+        response.data.logs.split('\n').forEach(l => addLog(l));
+      }
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.detail || "Connection failed. Ensure backend is running.");
-      setLogs(curr => [...curr, "CRITICAL ERROR: Generation failed."]);
+      addLog("CRITICAL: Neural link severed.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 lg:p-12 w-full max-w-[2000px] mx-auto flex flex-col gap-12">
+    <div className="min-h-screen flex flex-col md:flex-row font-sans">
 
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center space-y-4"
-      >
-        <div className="inline-flex items-center justify-center p-3 bg-white/5 rounded-2xl mb-4 border border-white/10 ring-1 ring-white/5 relative group">
-          <Sparkles className="w-8 h-8 text-primary-500 group-hover:text-amber-400 transition-colors duration-500" />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
+      {/* Mesh Gradient Background */}
+      <div className="mesh-gradient" />
+
+      {/* Sidebar Navigation */}
+      <aside className="w-full md:w-20 lg:w-24 bg-dark-950/40 backdrop-blur-2xl border-r border-white/5 flex flex-col items-center py-8 gap-10">
+        <div className="w-12 h-12 bg-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/30">
+          <Zap className="text-white fill-white" />
         </div>
-        <h1 className="text-5xl md:text-7xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-primary-200 to-indigo-300">
-          AI Art Studio
-        </h1>
-        <p className="text-slate-400 text-lg font-light tracking-wide flex items-center justify-center gap-3">
-          Neural Language Mastery <span className="text-white/20">•</span> v2.0 <span className="text-white/20">•</span>
-          <span className="text-amber-400 font-bold tracking-widest drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">UNLIMITED</span>
-        </p>
-      </motion.header>
+        <nav className="flex flex-col gap-8">
+          {[Wand2, History, ImageIcon, Settings].map((Icon, i) => (
+            <button key={i} className={`p-4 rounded-2xl transition-all duration-300 ${i === 0 ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>
+              <Icon className="w-6 h-6" />
+            </button>
+          ))}
+        </nav>
+        <div className="mt-auto flex flex-col gap-6 items-center">
+          <div className="w-10 h-10 rounded-full border border-white/10 bg-gradient-to-tr from-primary-500 to-indigo-500 shadow-inner" />
+        </div>
+      </aside>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Main Studio Area */}
+      <main className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 space-y-10">
 
-        {/* Left Control Panel */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-4 space-y-6"
-        >
-          {/* Prompt Section */}
-          <div className="glass rounded-3xl p-6 md:p-8 space-y-6">
-            <div>
-              <label className="label-text flex items-center gap-2">
-                <Wand2 className="w-4 h-4" /> Creative Vision
-              </label>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe your masterpiece..."
-                className="input-field min-h-[140px] resize-none text-lg"
-              />
+        {/* Header */}
+        <div className="flex justify-between items-end">
+          <header className="space-y-1">
+            <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
+              NFSI <span className="opacity-30">/</span> ART STUDIO
+            </h1>
+            <p className="text-slate-400 font-medium flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-primary-500" /> Neural Instance: <span className="text-primary-400">GPT-2-Turbo-4k</span>
+            </p>
+          </header>
+          <div className="hidden lg:flex gap-3">
+            <div className="px-4 py-2 glass rounded-xl flex items-center gap-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-xs font-bold tracking-widest text-slate-300">SYSTEM ONLINE</span>
             </div>
+          </div>
+        </div>
 
-            {/* NLP Settings */}
-            <div className="space-y-4">
-              <label className="label-text flex items-center gap-2">
-                <Terminal className="w-4 h-4" /> Neural Augmentation
-              </label>
-              <div className="grid grid-cols-1 gap-2">
-                {["None", "Transformer (Creative)", "NLTK (Keywords)"].map((mode) => (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+
+          {/* Controls Column */}
+          <div className="xl:col-span-5 space-y-8">
+
+            {/* Prompt Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card relative">
+              <label className="label-text">Neural prompt input</label>
+              <div className="relative group">
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe the unseen..."
+                  className="input-field min-h-[180px] resize-none text-lg pr-20"
+                />
+                <button
+                  onClick={() => {/* Enhance Logic */ }}
+                  className="absolute bottom-4 right-4 p-3 bg-primary-600 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-primary-500/30 group-hover:shadow-primary-500/50"
+                  title="Neural Enhancement"
+                >
+                  <Sparkles className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              {/* Preset Chips */}
+              <div className="mt-6 flex flex-wrap gap-2">
+                {PRESETS.map((p) => (
                   <button
-                    key={mode}
-                    onClick={() => setNlpMode(mode)}
-                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all text-left border ${nlpMode === mode
-                      ? 'bg-primary-600/20 border-primary-500 text-white shadow-lg shadow-primary-500/10'
-                      : 'bg-dark-950/30 border-white/5 text-slate-400 hover:bg-white/5'
-                      }`}
+                    key={p.name}
+                    onClick={() => setPrompt(p.prompt)}
+                    className="px-4 py-2 rounded-full border border-white/5 bg-white/5 text-[11px] font-bold text-slate-400 hover:border-primary-500/50 hover:text-white transition-all"
                   >
-                    {mode}
-                    {mode === nlpMode && <span className="float-right text-primary-400">●</span>}
+                    #{p.name.toUpperCase()}
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
-            {/* Technical Settings */}
-            <div className="space-y-4 pt-4 border-t border-white/5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="label-text">Width</label>
-                  <input
-                    type="number"
-                    value={width}
-                    onChange={(e) => setWidth(parseInt(e.target.value))}
-                    className="input-field"
-                  />
+            {/* Parameters Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="glass rounded-3xl p-6">
+                <label className="label-text">Logic Engine</label>
+                <div className="flex flex-col gap-2">
+                  {["None", "Transformer", "NLTK"].map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setNlpMode(m)}
+                      className={`px-4 py-3 rounded-xl text-xs font-bold text-left border transition-all ${nlpMode.includes(m) ? 'border-primary-500 bg-primary-500/10 text-white' : 'border-white/5 bg-black/20 text-slate-500 hover:bg-white/5'}`}
+                    >
+                      {m}
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <label className="label-text">Height</label>
-                  <input
-                    type="number"
-                    value={height}
-                    onChange={(e) => setHeight(parseInt(e.target.value))}
-                    className="input-field"
-                  />
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="glass rounded-3xl p-6 flex flex-col gap-4">
+                <div className="space-y-4">
+                  <label className="label-text">Dimensions</label>
+                  <div className="flex gap-4">
+                    <input type="number" value={width} onChange={(e) => setWidth(e.target.value)} className="input-field text-center py-2" />
+                    <Command className="w-4 h-4 mt-3 opacity-20" />
+                    <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} className="input-field text-center py-2" />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="label-text">Seed (-1 Random)</label>
-                <input
-                  type="number"
-                  value={seed}
-                  onChange={(e) => setSeed(parseInt(e.target.value))}
-                  className="input-field"
-                />
-              </div>
-              <div>
-                <label className="label-text flex items-center gap-2">
-                  <Layers className="w-4 h-4" /> Filter
-                </label>
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="input-field appearance-none bg-dark-950/50"
-                >
-                  <option value="None">None</option>
-                  <option value="Grayscale">Grayscale</option>
-                  <option value="Canny Edge">Canny Edge</option>
-                  <option value="Blur">Blur</option>
-                </select>
-              </div>
+                <div className="space-y-2">
+                  <label className="label-text">Style Filter</label>
+                  <select value={filter} onChange={(e) => setFilter(e.target.value)} className="input-field py-2 text-xs">
+                    {["None", "Grayscale", "Canny Edge", "Blur"].map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+              </motion.div>
             </div>
 
             <button
               onClick={generateImage}
               disabled={loading || !prompt}
-              className={`btn-primary flex items-center justify-center gap-2 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className="btn-primary group"
             >
               {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Dreaming...
-                </>
+                <RefreshCw className="w-6 h-6 animate-spin" />
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5" /> Generate Masterpiece
+                  <Wand2 className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                  GENERATE ARTIFACT
                 </>
               )}
             </button>
           </div>
-        </motion.div>
 
-        {/* Right Output Panel */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="lg:col-span-8 space-y-6"
-        >
-          <div className="glass rounded-[32px] p-2 min-h-[600px] flex items-center justify-center relative overflow-hidden group">
-            {/* Background noise texture or gradient */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-dark-950 via-dark-900 to-indigo-950/30 -z-10" />
+          {/* Result Column */}
+          <div className="xl:col-span-7 space-y-8">
 
-            <AnimatePresence mode="wait">
-              {result ? (
-                <motion.div
-                  key="result"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="relative w-full h-full"
-                >
-                  <img
-                    src={result.image}
-                    alt="Generative Art"
-                    className="w-full h-full object-contain rounded-[24px] shadow-2xl"
-                  />
-                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <a
-                      href={result.image}
-                      download={`nfsi-gen-${Date.now()}.jpg`}
-                      className="p-3 bg-black/50 backdrop-blur-md rounded-xl text-white hover:bg-black/70 transition-colors"
-                    >
-                      <Download className="w-5 h-5" />
-                    </a>
+            <motion.div
+              layout
+              className="glass rounded-[40px] p-2 aspect-square xl:aspect-auto xl:min-h-[700px] flex items-center justify-center relative overflow-hidden group shadow-[0_0_100px_-20px_rgba(129,140,248,0.1)]"
+            >
+              <AnimatePresence mode="wait">
+                {result ? (
+                  <motion.div key="img" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full relative">
+                    <img src={result.image} className="w-full h-full object-contain rounded-[34px]" alt="Gen Art" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[34px] flex flex-col justify-end p-10">
+                      <div className="flex justify-between items-center">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black tracking-widest text-primary-400">METADATA</p>
+                          <p className="text-white font-medium line-clamp-1 max-w-md">{result.final_prompt}</p>
+                        </div>
+                        <div className="flex gap-4">
+                          <button className="btn-secondary"><Share2 className="w-5 h-5" /></button>
+                          <button className="btn-secondary px-6"><Download className="w-5 h-5" /></button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-6 opacity-20">
+                    <div className="w-24 h-24 rounded-full border-2 border-dashed border-white flex items-center justify-center">
+                      <ImageIcon className="w-10 h-10" />
+                    </div>
+                    <p className="text-xl font-light tracking-widest uppercase">Canvas Void</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Loading State Overlay */}
+              {loading && (
+                <div className="absolute inset-0 bg-dark-950/60 backdrop-blur-xl z-50 flex flex-col items-center justify-center space-y-10">
+                  <div className="relative">
+                    <div className="w-32 h-32 rounded-full border-2 border-white/5 animate-pulse" />
+                    <div className="absolute inset-0 border-t-2 border-primary-500 rounded-full animate-spin shadow-[0_0_30px_rgba(129,140,248,0.5)]" />
+                    <Sparkles className="absolute inset-x-0 inset-y-0 m-auto w-10 h-10 text-white animate-bounce" />
                   </div>
-                  <div className="absolute bottom-4 left-4 right-4 p-4 bg-black/60 backdrop-blur-md rounded-2xl border border-white/10">
-                    <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Final Prompt</p>
-                    <p className="text-sm text-white line-clamp-2">{result.final_prompt}</p>
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-black text-white text-glow">SYNTHESIZING...</h2>
+                    <p className="text-slate-400 font-mono text-xs uppercase tracking-[0.3em]">Mapping Neural Vectors</p>
                   </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="placeholder"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center space-y-4 text-slate-600"
-                >
-                  <div className="w-24 h-24 rounded-full bg-white/5 mx-auto flex items-center justify-center border border-white/5">
-                    <ImageIcon className="w-10 h-10 opacity-50" />
-                  </div>
-                  <p className="font-light tracking-wide text-lg">Your canvas awaits.</p>
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
+            </motion.div>
 
-            {/* Loading Overlay */}
-            {loading && (
-              <div className="absolute inset-0 bg-dark-950/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center space-y-6">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full border-4 border-primary-500/20 shadow-[0_0_30px_rgba(139,92,246,0.2)]" />
-                  <div className="absolute top-0 left-0 w-20 h-20 rounded-full border-4 border-t-primary-500 animate-spin border-r-transparent border-b-transparent border-l-transparent" />
-                  <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white w-6 h-6 animate-pulse" />
+            {/* Status Console Overlay-style */}
+            <div className="glass rounded-[32px] p-8 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <div className="flex items-center gap-3">
+                  <Terminal className="text-primary-500 w-5 h-5" />
+                  <span className="text-xs font-black tracking-widest text-white">SYSTEM INTELLIGENCE</span>
                 </div>
-                <div className="text-center">
-                  <p className="text-white font-medium text-lg">Synthesizing Pixels</p>
-                  <p className="text-primary-400 text-sm animate-pulse">Running Neural Inference...</p>
-                </div>
+                <div className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-bold text-slate-500 uppercase">Live Output</div>
               </div>
-            )}
-          </div>
-
-          {/* Console / Logs */}
-          <div className="glass rounded-2xl p-6 overflow-hidden">
-            <label className="label-text flex items-center gap-2 mb-4">
-              <Terminal className="w-4 h-4" /> System Intelligence
-            </label>
-            <div className="font-mono text-sm space-y-2 max-h-40 overflow-y-auto text-slate-400 custom-scrollbar">
-              {logs.length === 0 && <span className="opacity-50">System ready. Waiting for input...</span>}
-              {logs.map((log, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex gap-2"
-                >
-                  <span className="text-primary-500/50">{">"}</span>
-                  <span>{log}</span>
-                </motion.div>
-              ))}
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex gap-2 text-red-400"
-                >
-                  <AlertCircle className="w-4 h-4 mt-0.5" />
-                  <span>{error}</span>
-                </motion.div>
-              )}
+              <div className="space-y-3">
+                {logs.length === 0 && <p className="text-slate-600 text-sm font-mono italic">Waiting for connection link...</p>}
+                {logs.map((log, i) => (
+                  <div key={i} className="flex gap-4 font-mono text-xs">
+                    <span className="text-primary-500 opacity-50">#00{i}</span>
+                    <span className={`${log.includes('CRITICAL') ? 'text-red-400' : 'text-slate-400'}`}>{log}</span>
+                  </div>
+                ))}
+                {error && <p className="text-red-400 text-xs font-mono bg-red-500/10 p-4 rounded-xl border border-red-500/20">{error}</p>}
+              </div>
             </div>
-          </div>
 
-        </motion.div>
-      </div>
+          </div>
+        </div>
+
+        {/* Horizontal Inspiration Vault */}
+        <section className="space-y-8 pt-10">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-black text-white tracking-tight">INSPIRATION VAULT</h3>
+            <button className="text-primary-400 text-xs font-bold hover:underline">VIEW ALL COLLECTION</button>
+          </div>
+          <div className="flex gap-8 overflow-x-auto custom-scrollbar pb-10 -mx-1 px-1">
+            {PRESETS.map((p, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -10 }}
+                onClick={() => setPrompt(p.prompt)}
+                className="min-w-[340px] flex-shrink-0 relative group cursor-pointer"
+              >
+                <div className="aspect-[16/10] bg-dark-900 rounded-[32px] overflow-hidden border border-white/5 shadow-2xl relative">
+                  <div className={`absolute inset-0 bg-gradient-to-br transition-all duration-700 ${i === 0 ? 'from-purple-500/20' : i === 1 ? 'from-amber-500/20' : i === 2 ? 'from-blue-500/20' : 'from-indigo-500/20'} to-transparent`} />
+                  <div className="absolute inset-0 flex flex-col justify-end p-8 gap-3">
+                    <div className="w-10 h-10 glass rounded-xl flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-white" />
+                    </div>
+                    <p className="text-white font-bold text-xl drop-shadow-lg">{p.name}</p>
+                    <p className="text-slate-400 text-xs line-clamp-1 opacity-0 group-hover:opacity-100 transition-opacity">{p.prompt}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+      </main>
     </div>
   );
 }
