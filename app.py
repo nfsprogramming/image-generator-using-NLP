@@ -69,7 +69,8 @@ def generate_and_process(prompt, nlp_mode, filter_choice, width, height, seed, p
             image = Image.open(BytesIO(response.content))
             if filter_choice != "None":
                 image = apply_opencv_filter(image, filter_choice)
-            return image, f"Neural Synthesis Successful | Final Prompt: {final_prompt[:80]}..."
+            short_prompt = str(final_prompt)[0:80]
+            return image, f"Neural Synthesis Successful | Final Prompt: {short_prompt}..."
         else:
             return None, f"Cloud Synthesis Failed: {response.status_code}"
     except Exception as e:
