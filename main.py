@@ -147,7 +147,12 @@ async def generate(req: GenerateRequest):
     url = f"https://image.pollinations.ai/prompt/{requests.utils.quote(final_prompt)}?width={req.width}&height={req.height}&seed={seed}&nologo=true"
     
     try:
-        response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=120)
+        api_key = os.getenv("POLLINATIONS_API_KEY", "")
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Authorization': f'Bearer {api_key}'
+        }
+        response = requests.get(url, headers=headers, timeout=120)
         if response.status_code == 200:
             image = Image.open(BytesIO(response.content))
             if req.filter != "None":
