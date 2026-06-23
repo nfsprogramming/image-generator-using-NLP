@@ -1,0 +1,7 @@
+requests
+pillow
+opencv-python-headless
+nltk
+fastapi
+uvicorn
+python-multipart

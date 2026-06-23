@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-studio-dark: #0a0a14;
+  --color-studio-panel: #121221;
+  --color-studio-accent: #6366f1;
+  --color-studio-glow: #a855f7;
+  --color-studio-text: #94a3b8;
+  --color-studio-highlight: #e2e8f0;
+}
+
+html, body, #root {
+  @apply min-h-screen m-0 p-0;
+}
+
+body {
+  @apply bg-studio-dark text-studio-text font-sans antialiased selection:bg-studio-accent selection:text-white;
+}
+
+/* Custom scrollbar for terminal and textareas */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e1e38;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6366f1;
+}
+
+/* Subtle glow for the main generate button */
+.btn-glow {
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+  transition: all 0.3s ease;
+}
+.btn-glow:hover {
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Panel border glow */
+.panel-border {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Background pattern for the canvas */
+.canvas-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
